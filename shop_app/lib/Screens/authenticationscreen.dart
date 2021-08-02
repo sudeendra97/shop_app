@@ -229,6 +229,9 @@ class _AuthCardState extends State<AuthCard> {
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   textColor: Theme.of(context).primaryColor,
                 ),
+                SizedBox(
+                  height: 10,
+                ),
               ],
             ),
           ),
