@@ -9,6 +9,8 @@ import 'package:provider/provider.dart';
 class ReportScreen extends StatefulWidget {
   ReportScreen({Key key}) : super(key: key);
 
+  static const routeName = '/ReportScreen';
+
   @override
   _ReportScreenState createState() => _ReportScreenState();
 }

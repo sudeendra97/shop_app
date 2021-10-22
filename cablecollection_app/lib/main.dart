@@ -10,8 +10,10 @@ import 'package:cablecollection_app/screens/authscreen.dart';
 import 'package:cablecollection_app/screens/billingscreen.dart';
 import 'package:cablecollection_app/screens/complaints_screen.dart';
 import 'package:cablecollection_app/screens/customerdetailsscreen.dart';
+import 'package:cablecollection_app/screens/display_notification_data.dart';
 import 'package:cablecollection_app/screens/individual_customer_complaint_screen.dart';
 import 'package:cablecollection_app/screens/node_wise_customer_list.dart';
+import 'package:cablecollection_app/screens/reportscreen.dart';
 import 'package:cablecollection_app/screens/splashScreen.dart';
 import 'package:cablecollection_app/screens/store_screen.dart';
 import 'package:cablecollection_app/screens/todo_screen.dart';
@@ -25,10 +27,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 const AndroidNotificationChannel channel = AndroidNotificationChannel(
-  '1234',
-  'Name',
-  'Description',
-  importance: Importance.high,
+  'high_importance_channel', // id
+  'High Importance Notifications', // title
+  'This channel is used for important notifications.', // description
+  importance: Importance.max,
+
   playSound: true,
 );
 
@@ -37,7 +40,25 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print('A Message Showed Up:${message.messageId}');
+  // FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  //     FlutterLocalNotificationsPlugin();
+
+  print('A Message Showed Up:${message.data['body']}');
+  flutterLocalNotificationsPlugin.show(
+      1,
+      message.data['title'],
+      message.data['body'],
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          channel.id,
+          channel.name,
+          channel.description,
+          importance: Importance.max,
+          priority: Priority.max,
+          color: Colors.blue,
+        ),
+      ),
+      payload: message.data['cuId']);
 }
 
 Future<void> main() async {
@@ -45,8 +66,8 @@ Future<void> main() async {
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  // FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  //     FlutterLocalNotificationsPlugin();
 
   var initializationSettingsAndroid = AndroidInitializationSettings('app_icon');
 
@@ -76,28 +97,79 @@ class MyHome extends StatefulWidget {
 }
 
 class _MyHomeState extends State<MyHome> {
-  @override
-  Widget build(BuildContext context) {
-    return MyApp();
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return MyApp();
+//   }
+// }
 
-class MyApp extends StatefulWidget {
+// class MyApp extends StatefulWidget {
+
+//   @override
+//   State<MyApp> createState() => _MyAppState();
+// }
+
+// class _MyAppState extends State<MyApp> {
   static const routeName = '/';
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
   final Color darkBlue = Color(0xFFE4FBFF);
+  final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey(debugLabel: "Main Navigator");
+  var initializationSettingsAndroid = AndroidInitializationSettings('app_icon');
 
   @override
   void initState() {
+    var initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
     FirebaseMessaging.instance.getToken().then((value) {
       log(value);
     });
+    flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onSelectNotification: onSelectNotification);
+    checkForInitialMessage();
+
     super.initState();
+  }
+
+  Future<dynamic> onSelectNotification(payload) async {
+// navigate to booking screen if the payload equal BOOKING
+    this
+        .navigatorKey
+        .currentState
+        .pushNamed(ReportScreen.routeName, arguments: payload);
+// if(payload == "BOOKING"){
+//  this.navigatorKey.currentState.pushNamed(
+//  NotificationDataDisplay.routeName
+//    );
+//  }
+  }
+
+  checkForInitialMessage() async {
+    await Firebase.initializeApp();
+    RemoteMessage initialMessage =
+        await FirebaseMessaging.instance.getInitialMessage();
+
+    if (initialMessage != null) {
+      // PushNotification notification = PushNotification(
+      //   title: initialMessage.notification?.title,
+      //   body: initialMessage.notification?.body,
+      // );
+      // setState(() {
+      showDialog(
+          context: context,
+          builder: (_) {
+            return AlertDialog(
+              title: Text(initialMessage.notification.title),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [Text(initialMessage.notification.body)],
+                ),
+              ),
+            );
+          });
+      // });
+    }
   }
 
   Widget build(BuildContext context) {
@@ -120,6 +192,7 @@ class _MyAppState extends State<MyApp> {
       ],
       child: Consumer<Auth>(
         builder: (ctx, auth, _) => MaterialApp(
+          navigatorKey: navigatorKey,
           theme: ThemeData.light(),
           title: 'Cable Collection',
           debugShowCheckedModeBanner: false,
@@ -151,6 +224,9 @@ class _MyAppState extends State<MyApp> {
             AreaWiseCustomerList.routeName: (ctx) => AreaWiseCustomerList(),
             NodeWiseCustomerList.routeName: (ctx) => NodeWiseCustomerList(),
             SignUpScreen.routeName: (ctx) => SignUpScreen(),
+            NotificationDataDisplay.routeName: (ctx) =>
+                NotificationDataDisplay(),
+            ReportScreen.routeName: (ctx) => ReportScreen(),
           },
         ),
       ),

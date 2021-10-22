@@ -14,12 +14,15 @@ var message = {
     data: {
         title: '850',
         body: '2:45',
+        
+        
 
     },
     token: registrationToken
+   
 };
 
-admin.messaging().send(message).then((response) => {
+admin.messaging().send(message,).then((response) => {
     console.log('successfully sent message', response);
 
 })

@@ -20,7 +20,8 @@ class ReportList with ChangeNotifier {
   List<Customer> _list = [];
   int colletionTotal = 0;
   static var cusId;
-  var baseUrl = 'https://samasthadeeparednet.herokuapp.com/';
+  // var baseUrl = 'https://samasthadeeparednet.herokuapp.com/';
+  var baseUrl = 'https://demoeazybill.herokuapp.com/';
 
   List<Report> get reportList {
     return [...?_reportList];
@@ -89,102 +90,104 @@ class ReportList with ChangeNotifier {
       print(response.statusCode);
       print(response.body);
       var responseData = json.decode(response.body);
+      if (responseData.isNotEmpty) {
+        for (var data in responseData['bill']) {
+          billdata.add(data);
+        }
 
-      for (var data in responseData['bill']) {
-        billdata.add(data);
-      }
+        for (var data in responseData['customer']) {
+          customerData.add(data);
+        }
+        print(billdata.length);
+        print(customerData.length);
 
-      for (var data in responseData['customer']) {
-        customerData.add(data);
+        for (int i = 0; i < billdata.length; i++) {
+          for (int j = 0; j < customerData.length; j++) {
+            if (billdata[i]['cuId'] == customerData[j]['cuId']) {
+              report.add({
+                'agentName': billdata[i]['BillBy'],
+                'name': customerData[j]['Name'],
+                'scnNumber': customerData[j]['SmartCardNumber'],
+                'amount': billdata[i]['PaidAmount'],
+                'billDate': billdata[i]['BillDate'],
+                'fromDate': billdata[i]['BillFrom'],
+                'toDate': billdata[i]['BillTo'],
+                'billNo': billdata[i]['BillNo'],
+              });
+            }
+          }
+        }
+        for (var data in report) {
+          colletionTotal = colletionTotal + data['amount'];
+          loadedCustomer.add(Report(
+            agentName: data['agentName'],
+            amount: data['amount'].toString(),
+            billDate: data['billDate'],
+            fromDate: data['fromDate'],
+            name: data['name'],
+            scnNumber: data['scnNumber'].toString(),
+            toDate: data['toDate'],
+            billNo: data['billNo'],
+          ));
+        }
+
+        final Workbook workbook = Workbook();
+        final Worksheet sheet = workbook.worksheets[0];
+        Range range = sheet.getRangeByName('A1');
+        range.setText('BillNo');
+        range = sheet.getRangeByName('B1');
+        range.setText('BillDate');
+        range = sheet.getRangeByName('C1');
+        range.setText('Amount');
+        range = sheet.getRangeByName('D1');
+        range.setText('Name');
+        range = sheet.getRangeByName('E1');
+        range.setText('FromDate');
+        range = sheet.getRangeByName('F1');
+        range.setText('ToDate');
+        range = sheet.getRangeByName('G1');
+        range.setText('Scn Number');
+        range = sheet.getRangeByName('H1');
+        range.setText('Agent Name');
+
+        List reportData = [];
+        var myFormat = DateFormat('d-MM-yyyy');
+
+        for (var data in report) {
+          reportData.add([
+            data['billNo'],
+            myFormat.format(DateTime.parse(data['billDate'])),
+            data['amount'],
+            data['name'],
+            myFormat.format(DateTime.parse(
+              data['fromDate'],
+            )),
+            myFormat.format(DateTime.parse(data['toDate'])),
+            data['scnNumber'],
+            data['agentName'],
+          ]);
+        }
+
+        for (int i = 0; i < reportData.length; i++) {
+          sheet.importList(reportData[i], i + 2, 1, false);
+        }
+        final List<int> bytes = workbook.saveAsStream();
+        // File('InsertRowandColumn.xlsx').writeAsBytes(bytes);
+        final file = await _localFile;
+        file.writeAsBytes(bytes);
+
+        workbook.dispose();
+
+        yearlyReportList = loadedCustomer;
+
+        // log(response.body);
+        log(report.toString());
       }
-      print(billdata.length);
-      print(customerData.length);
 
       // log(responseData.toString());
 
       // print(billdata);
 
-      for (int i = 0; i < billdata.length; i++) {
-        for (int j = 0; j < customerData.length; j++) {
-          if (billdata[i]['cuId'] == customerData[j]['cuId']) {
-            report.add({
-              'agentName': billdata[i]['BillBy'],
-              'name': customerData[j]['Name'],
-              'scnNumber': customerData[j]['SmartCardNumber'],
-              'amount': billdata[i]['PaidAmount'],
-              'billDate': billdata[i]['BillDate'],
-              'fromDate': billdata[i]['BillFrom'],
-              'toDate': billdata[i]['BillTo'],
-              'billNo': billdata[i]['BillNo'],
-            });
-          }
-        }
-      }
-      for (var data in report) {
-        colletionTotal = colletionTotal + data['amount'];
-        loadedCustomer.add(Report(
-          agentName: data['agentName'],
-          amount: data['amount'].toString(),
-          billDate: data['billDate'],
-          fromDate: data['fromDate'],
-          name: data['name'],
-          scnNumber: data['scnNumber'].toString(),
-          toDate: data['toDate'],
-          billNo: data['billNo'],
-        ));
-      }
-
-      final Workbook workbook = Workbook();
-      final Worksheet sheet = workbook.worksheets[0];
-      Range range = sheet.getRangeByName('A1');
-      range.setText('BillNo');
-      range = sheet.getRangeByName('B1');
-      range.setText('BillDate');
-      range = sheet.getRangeByName('C1');
-      range.setText('Amount');
-      range = sheet.getRangeByName('D1');
-      range.setText('Name');
-      range = sheet.getRangeByName('E1');
-      range.setText('FromDate');
-      range = sheet.getRangeByName('F1');
-      range.setText('ToDate');
-      range = sheet.getRangeByName('G1');
-      range.setText('Scn Number');
-      range = sheet.getRangeByName('H1');
-      range.setText('Agent Name');
-
-      List reportData = [];
-      var myFormat = DateFormat('d-MM-yyyy');
-
-      for (var data in report) {
-        reportData.add([
-          data['billNo'],
-          myFormat.format(DateTime.parse(data['billDate'])),
-          data['amount'],
-          data['name'],
-          myFormat.format(DateTime.parse(
-            data['fromDate'],
-          )),
-          myFormat.format(DateTime.parse(data['toDate'])),
-          data['scnNumber'],
-          data['agentName'],
-        ]);
-      }
-
-      for (int i = 0; i < reportData.length; i++) {
-        sheet.importList(reportData[i], i + 2, 1, false);
-      }
-      final List<int> bytes = workbook.saveAsStream();
-      // File('InsertRowandColumn.xlsx').writeAsBytes(bytes);
-      final file = await _localFile;
-      file.writeAsBytes(bytes);
-
-      workbook.dispose();
-
-      yearlyReportList = loadedCustomer;
-
-      // log(response.body);
-      log(report.toString());
       notifyListeners();
       return response.statusCode;
     } catch (e) {
@@ -393,6 +396,8 @@ class ReportList with ChangeNotifier {
 
       var responseData = json.decode(response.body);
       return {'StatusCode': response.statusCode, 'ResponseBody': responseData};
-    } catch (e) {}
+    } catch (e) {
+      rethrow;
+    }
   }
 }

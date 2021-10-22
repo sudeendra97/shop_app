@@ -14,8 +14,9 @@ class Auth with ChangeNotifier {
   var _authTimer;
   // String url=
 
-  var baseUrl = 'https://samasthadeeparednet.herokuapp.com/';
+  // var baseUrl = 'https://samasthadeeparednet.herokuapp.com/';
 
+  var baseUrl = 'https://demoeazybill.herokuapp.com/';
   bool get isAuth {
     return token != null;
   }
@@ -36,8 +37,10 @@ class Auth with ChangeNotifier {
   Future<int> authenticate(
     String email,
     String password,
+    var token,
   ) async {
     final url = Uri.parse('${baseUrl}admin/signin');
+    print(token);
     try {
       final response = await http.post(
         url,
@@ -49,6 +52,7 @@ class Auth with ChangeNotifier {
           {
             'mobile': email,
             'password': password,
+            'Fcm_Token': token,
           },
         ),
       );
@@ -132,10 +136,11 @@ class Auth with ChangeNotifier {
     }
   }
 
-  Future<void> logIn(String email, String password) async {
+  Future<void> logIn(String email, String password, var token) async {
     return authenticate(
       email,
       password,
+      token,
     );
   }
 

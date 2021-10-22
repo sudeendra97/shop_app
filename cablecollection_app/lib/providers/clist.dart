@@ -18,7 +18,8 @@ class CustomerList with ChangeNotifier {
   var _authToken;
   var cuid;
   CustomerList([this._authToken]);
-  var baseUrl = 'https://samasthadeeparednet.herokuapp.com/';
+  // var baseUrl = 'https://samasthadeeparednet.herokuapp.com/';
+  var baseUrl = 'https://demoeazybill.herokuapp.com/';
 
   List areaList = [];
   List areaDetails = [];
@@ -711,11 +712,12 @@ class CustomerList with ChangeNotifier {
         return null;
       } else {
         print(response.statusCode);
-        // print(response.body);
+        print(response.body);
         final extratedData = json.decode(response.body) as Map<String, dynamic>;
-        Map<String, String> customerData = {
+        Map<String, dynamic> customerData = {
           'id': extratedData['stb']['id'],
           'name': extratedData['stb']['Name'],
+          'number': extratedData['stb']['Mobile'],
           'smartCardNumber': extratedData['stb']['SmartCardNumber'],
           'packageAmount': extratedData['stb']['PackageAmount'],
           'paidAmount': extratedData['PaidAmount'] == null

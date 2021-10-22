@@ -5,6 +5,13 @@ import 'package:cablecollection_app/providers/customerbill.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_open_whatsapp/flutter_open_whatsapp.dart';
+import 'package:whatsapp_unilink/whatsapp_unilink.dart';
+import 'package:telephony/telephony.dart';
+
+// For Flutter applications, you'll most likely want to use
+// the url_launcher package.
+import 'package:url_launcher/url_launcher.dart';
 
 class BillingScreen extends StatefulWidget {
   static const routeName = '/BillingScreen';
@@ -21,15 +28,18 @@ class _BillingScreenState extends State<BillingScreen> {
   var numberOfDays = 30;
   var cuId;
   var isloading = true;
+  final Telephony telephony = Telephony.instance;
+  var myFormat = DateFormat('dd-MM-yyyy');
 
   Map<String, dynamic> customerData;
-  var cusValues = {
+  Map<String, dynamic> cusValues = {
     'id': '',
     'name': '',
     'smartCardNumber': '',
     'packageAmount': '',
     'advance': '0',
     'lastPaid': '',
+    'mobileNumber': null,
   };
   var customerBillData = CustomerBill(
     advance: '',
@@ -82,6 +92,7 @@ class _BillingScreenState extends State<BillingScreen> {
                   'smartCardNumber': value['smartCardNumber'],
                   'packageAmount': value['packageAmount'],
                   'lastPaid': value['paidAmount'],
+                  'mobileNumber': value['number'],
                 };
               });
               reRun();
@@ -169,9 +180,22 @@ class _BillingScreenState extends State<BillingScreen> {
           var token = Provider.of<Auth>(context, listen: false).token;
           Provider.of<BillList>(context, listen: false)
               .addBill(customerBillData, token)
-              .then((value) {
+              .then((value) async {
             if (value == 201 || value == 200) {
               reRun();
+              bool permissionsGranted =
+                  await telephony.requestPhoneAndSmsPermissions;
+              final SmsSendStatusListener listener = (SendStatus status) {
+                print('success');
+
+                // Handle the status
+              };
+              telephony.sendSms(
+                to: cusValues['mobileNumber'].toString(),
+                message:
+                    "Your Cable Bill of Rs${customerBillData.paidamount} is paid on ${myFormat.format(DateTime.fromMillisecondsSinceEpoch(customerBillData.billdate))}",
+                statusListener: listener,
+              );
               showDialog(
                 context: context,
                 builder: (ctx) => AlertDialog(
@@ -179,7 +203,11 @@ class _BillingScreenState extends State<BillingScreen> {
                   content: Text('Bill Successfully Submitted'),
                   actions: [
                     FlatButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        // launchWhatsApp();
+                        // FlutterOpenWhatsapp.sendSingleMessage(
+                        //     cusValues['mobileNumber'].toString(),
+                        //     "Your Cable Bill of Rs${customerBillData.paidamount} is paid on ${customerBillData.billdate} ");
                         Navigator.of(ctx).pop();
                         Navigator.of(context).pop();
                       },
@@ -228,6 +256,18 @@ class _BillingScreenState extends State<BillingScreen> {
       );
     }
     //  Navigator.of(context).pop();
+  }
+
+  launchWhatsApp() async {
+    final link = WhatsAppUnilink(
+      phoneNumber: cusValues['mobileNumber'].toString(),
+      text:
+          "Your Cable Bill of Rs${customerBillData.paidamount} is paid on ${customerBillData.billdate}",
+    );
+    // Convert the WhatsAppUnilink instance to a string.
+    // Use either Dart's string interpolation or the toString() method.
+    // The "launch" method is part of "url_launcher".
+    await launch('$link');
   }
 
   @override

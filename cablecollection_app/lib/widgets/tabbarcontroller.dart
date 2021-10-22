@@ -1,5 +1,6 @@
 import 'package:cablecollection_app/widgets/drawercontainer.dart';
 import 'package:cablecollection_app/widgets/mainscreen.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -24,14 +25,15 @@ class _tabBarControllerState extends State<tabBarController> {
   @override
   void initState() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print(message);
+      print(message.data['cuId']);
       RemoteNotification notification = message.notification;
       AndroidNotification android = message.notification?.android;
       // if (notification != null && android != null) {
       flutterLocalNotificationsPlugin.show(
           message.data.hashCode,
           message.data['title'],
-          message.data['body'],
+          message.data['title'],
+          // message.data['cuId'],
           // notification.hashCode,
           // notification.title,
           // notification.body,
@@ -45,27 +47,26 @@ class _tabBarControllerState extends State<tabBarController> {
           ));
       // }
     });
-
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print('A new onMessageOpenedApp event was published');
       RemoteNotification notification = message.notification;
       AndroidNotification android = message.notification.android;
-      if (notification != null && android != null) {
-        showDialog(
-            context: context,
-            builder: (_) {
-              return AlertDialog(
-                title: Text(notification.title),
-                content: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [Text(notification.body)],
-                  ),
+      // if (notification != null && android != null) {
+      showDialog(
+          context: context,
+          builder: (_) {
+            return AlertDialog(
+              title: Text(message.data['title']),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [Text(message.data['title'])],
                 ),
-              );
-            });
-      }
+              ),
+            );
+          });
     });
+
     super.initState();
   }
 

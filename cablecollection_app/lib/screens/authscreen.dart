@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:cablecollection_app/providers/auth.dart';
 import 'package:cablecollection_app/screens/signupscreen.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cablecollection_app/widgets/tabbarcontroller.dart';
@@ -22,7 +25,17 @@ class _AuthScreenState extends State<AuthScreen> {
   Map<String, String> _authData = {
     'Mobile_Number': '',
     'Password': '',
+    'Fcm_Token': '',
   };
+
+  @override
+  void initState() {
+    FirebaseMessaging.instance.getToken().then((value) {
+      log(value);
+      _authData['Fcm_Token'] = value;
+    });
+    super.initState();
+  }
 
   void _showErrorDialog(String message) {
     showDialog(
@@ -62,6 +75,7 @@ class _AuthScreenState extends State<AuthScreen> {
           .authenticate(
         _authData['Mobile_Number'],
         _authData['Password'],
+        _authData['Fcm_Token'],
       )
           .then((value) {
         setState(() {
@@ -79,6 +93,9 @@ class _AuthScreenState extends State<AuthScreen> {
                 FlatButton(
                   onPressed: () {
                     Navigator.of(ctx).pop();
+                    setState(() {
+                      isloading = false;
+                    });
                   },
                   child: const Text('ok'),
                 )
