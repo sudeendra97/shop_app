@@ -8,6 +8,7 @@ import 'package:cablecollection_app/providers/reportlist.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 class CustomerList with ChangeNotifier {
   List<Customer> _list = [];
@@ -18,8 +19,8 @@ class CustomerList with ChangeNotifier {
   var _authToken;
   var cuid;
   CustomerList([this._authToken]);
-  // var baseUrl = 'https://samasthadeeparednet.herokuapp.com/';
-  var baseUrl = 'https://demoeazybill.herokuapp.com/';
+  var baseUrl = 'https://samasthadeeparednet.herokuapp.com/';
+  // var baseUrl = 'https://demoeazybill.herokuapp.com/';
 
   List areaList = [];
   List areaDetails = [];
@@ -162,9 +163,9 @@ class CustomerList with ChangeNotifier {
     return 500;
   }
 
-//Store
-  Future<List<Customer>> fetchAndSetCustomer(var token) async {
+  Future<List<Customer>> fetchAndSetCustomerOnRefresh(var token) async {
     final Url = Uri.parse('${baseUrl}customer/allcustomer/inUse');
+    String fileName = "customerList.json";
 
     try {
       final responseData = await http.get(
@@ -180,6 +181,11 @@ class CustomerList with ChangeNotifier {
       } else {
         final extratedData = json.decode(responseData.body);
         // print(' This is $extratedData');
+        var tempDir = await getTemporaryDirectory();
+        print("Loading from API on refresh");
+        File file = new File(tempDir.path + "/" + fileName);
+        file.writeAsString(responseData.body,
+            flush: true, mode: FileMode.write);
 
         final List<Customer> loadedCustomers = [];
         for (var data in extratedData) {
@@ -212,6 +218,101 @@ class CustomerList with ChangeNotifier {
         _list = loadedCustomers;
         // notifyListeners();
         return loadedCustomers;
+      }
+    } catch (error) {
+      rethrow;
+    }
+  }
+
+//Store
+  Future<List<Customer>> fetchAndSetCustomer(var token) async {
+    final Url = Uri.parse('${baseUrl}customer/allcustomer/inUse');
+    var cacheDir = await getTemporaryDirectory();
+    String fileName = "customerList.json";
+
+    try {
+      if (await File(cacheDir.path + "/" + fileName).exists()) {
+        print("Loading from cache");
+        //TOD0: Reading from the json File
+        var jsonData = File(cacheDir.path + "/" + fileName).readAsStringSync();
+
+        if (json.decode(jsonData) == null) {
+          return [];
+        } else {
+          final extratedData = json.decode(jsonData);
+          // print(' This is $extratedData');
+
+          final List<Customer> loadedCustomers = [];
+          for (var data in extratedData) {
+            loadedCustomers.add(
+              Customer(
+                cuId: data['cuId'].toString(),
+                name: data['Name'],
+                mobile: data['Mobile'],
+                smartCardNumber: data['SmartCardNumber'],
+                status: data['Status'],
+                subscriptionEndDate: data['SubscriptionEndDate'] == null
+                    ? 'No End Date'
+                    : data['SubscriptionEndDate'],
+              ),
+            );
+          }
+          _list = loadedCustomers;
+          // notifyListeners();
+          return loadedCustomers;
+        }
+      } else {
+        final responseData = await http.get(
+          Url,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": token,
+          },
+        );
+
+        if (json.decode(responseData.body) == null) {
+          return [];
+        } else {
+          final extratedData = json.decode(responseData.body);
+          // print(' This is $extratedData');
+          var tempDir = await getTemporaryDirectory();
+          print("Loading from API customer list");
+          File file = new File(tempDir.path + "/" + fileName);
+          file.writeAsString(responseData.body,
+              flush: true, mode: FileMode.write);
+
+          final List<Customer> loadedCustomers = [];
+          for (var data in extratedData) {
+            loadedCustomers.add(
+              Customer(
+                cuId: data['cuId'].toString(),
+                //  id: prodData['id'],
+                name: data['Name'],
+                //   aadharnumber: prodData['AadharNumber'],
+                //   address: prodData['Address'],
+                //   advance: prodData['Advance'],
+                // area: prodData['Area'],
+                //  due: prodData['Due'],
+                //   email: prodData['Email'],
+                mobile: data['Mobile'],
+                //  node: prodData['Node'],
+                //  packageAmount: prodData['PackageAmount'],
+                //  packages: prodData['Packages'],
+                smartCardNumber: data['SmartCardNumber'],
+                status: data['Status'],
+                //  stbId: prodData['StbId'],
+                //  stbMaterial: prodData['StbMaterial'],
+                //  tv: prodData['TV'],
+                subscriptionEndDate: data['SubscriptionEndDate'] == null
+                    ? 'No End Date'
+                    : data['SubscriptionEndDate'],
+              ),
+            );
+          }
+          _list = loadedCustomers;
+          // notifyListeners();
+          return loadedCustomers;
+        }
       }
     } catch (error) {
       rethrow;
@@ -316,10 +417,181 @@ class CustomerList with ChangeNotifier {
   //                           filename: fileName),
   //                     });
   //                   } catch (e) {}
-  //                 }
-
+  //
+  //              }
   Future<Map<String, dynamic>> customerOverViewScreen(var token) async {
     final url = Uri.parse('${baseUrl}customer/allareas');
+    var cacheDir = await getTemporaryDirectory();
+    String fileName = "cableOverView.json";
+
+    try {
+      if (await File(cacheDir.path + "/" + fileName).exists()) {
+        print("Loading from cache");
+        //TOD0: Reading from the json File
+        var jsonData = File(cacheDir.path + "/" + fileName).readAsStringSync();
+
+        if (json.decode(jsonData) == null) {
+          return {};
+        } else {
+          final extratedData = json.decode(jsonData) as List;
+          // print(' This is $extratedData');
+          List allAreaValues = [];
+          List allAreas = [];
+          int totalActive = 0;
+          int totalInactive = 0;
+          int totalStore = 0;
+
+          for (var value in extratedData) {
+            allAreas.add(
+              value['Area'].toString(),
+            );
+            totalActive = totalActive + value['Active'];
+            totalInactive = totalInactive + value['InActive'];
+            totalStore = totalStore + value['Store'];
+            allAreaValues.add({
+              'Area': value['Area'],
+              'Node': value['Node'],
+              'Active': value['Active'],
+              'InActive': value['InActive'],
+              'Store': value['Store'],
+            });
+          }
+          List result = [
+            ...{...allAreas}
+          ];
+          areaList = result;
+          areaDetails = allAreaValues;
+          List<Map<String, dynamic>> activeInactive = [];
+
+          for (int i = 0; i < result.length; i++) {
+            int active = 0;
+            int inactive = 0;
+            int store = 0;
+
+            for (int j = 0; j < allAreaValues.length; j++) {
+              if (result[i] == allAreaValues[j]['Area']) {
+                active = active + allAreaValues[j]['Active'];
+                inactive = inactive + allAreaValues[j]['InActive'];
+                store = store + allAreaValues[j]['Store'];
+              }
+            }
+            activeInactive.add({
+              'area': result[i],
+              'active': active,
+              'inactive': inactive,
+              'store': store,
+            });
+          }
+
+          //notifyListeners();
+          // print('$totalActive,$totalInactive,$totalStore');
+          // print(activeInactive.toString());
+          // print(result.toString());
+          // log(allAreas.toString());
+          // log(allAreaValues.toString());
+
+          // log(response.body);
+          return {
+            'areaList': result,
+            'areaDetails': allAreaValues,
+            'areaValues': activeInactive,
+            'totalActive': totalActive,
+            'totalInactive': totalInactive,
+            'totalStore': totalStore,
+          };
+        }
+      } else {
+        final response = await http.get(
+          url,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": token,
+          },
+        );
+        var tempDir = await getTemporaryDirectory();
+
+        var data = json.decode(response.body) as List;
+        print("Loading data from API ");
+        File file = new File(tempDir.path + "/" + fileName);
+        file.writeAsString(response.body, flush: true, mode: FileMode.write);
+
+        List allAreaValues = [];
+        List allAreas = [];
+        int totalActive = 0;
+        int totalInactive = 0;
+        int totalStore = 0;
+
+        for (var value in data) {
+          allAreas.add(
+            value['Area'].toString(),
+          );
+          totalActive = totalActive + value['Active'];
+          totalInactive = totalInactive + value['InActive'];
+          totalStore = totalStore + value['Store'];
+          allAreaValues.add({
+            'Area': value['Area'],
+            'Node': value['Node'],
+            'Active': value['Active'],
+            'InActive': value['InActive'],
+            'Store': value['Store'],
+          });
+        }
+        List result = [
+          ...{...allAreas}
+        ];
+        areaList = result;
+        areaDetails = allAreaValues;
+        List<Map<String, dynamic>> activeInactive = [];
+
+        for (int i = 0; i < result.length; i++) {
+          int active = 0;
+          int inactive = 0;
+          int store = 0;
+
+          for (int j = 0; j < allAreaValues.length; j++) {
+            if (result[i] == allAreaValues[j]['Area']) {
+              active = active + allAreaValues[j]['Active'];
+              inactive = inactive + allAreaValues[j]['InActive'];
+              store = store + allAreaValues[j]['Store'];
+            }
+          }
+          activeInactive.add({
+            'area': result[i],
+            'active': active,
+            'inactive': inactive,
+            'store': store,
+          });
+        }
+
+        //notifyListeners();
+        // print('$totalActive,$totalInactive,$totalStore');
+        // print(activeInactive.toString());
+        // print(result.toString());
+        // log(allAreas.toString());
+        // log(allAreaValues.toString());
+
+        print(response.statusCode);
+
+        // log(response.body);
+        return {
+          'areaList': result,
+          'areaDetails': allAreaValues,
+          'areaValues': activeInactive,
+          'totalActive': totalActive,
+          'totalInactive': totalInactive,
+          'totalStore': totalStore,
+        };
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> customerOverViewScreenOnRefresh(
+      var token) async {
+    final url = Uri.parse('${baseUrl}customer/allareas');
+    var cacheDir = await getTemporaryDirectory();
+    String fileName = "cableOverView.json";
 
     try {
       final response = await http.get(
@@ -329,8 +601,12 @@ class CustomerList with ChangeNotifier {
           "Authorization": token,
         },
       );
+      var tempDir = await getTemporaryDirectory();
 
       var data = json.decode(response.body) as List;
+      print("Loading data from API ");
+      File file = new File(tempDir.path + "/" + fileName);
+      file.writeAsString(response.body, flush: true, mode: FileMode.write);
 
       List allAreaValues = [];
       List allAreas = [];
@@ -399,9 +675,8 @@ class CustomerList with ChangeNotifier {
         'totalStore': totalStore,
       };
     } catch (e) {
-      print(e);
+      rethrow;
     }
-    return {};
   }
 
   Future<List<Customer>> fetchAndSetCustomerStore(var token) async {

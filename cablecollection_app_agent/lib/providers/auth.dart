@@ -16,6 +16,10 @@ class Auth with ChangeNotifier {
   // String url=
 
   var baseUrl = 'https://samasthadeeparednet.herokuapp.com/';
+<<<<<<< Updated upstream
+=======
+  // var baseUrl = 'https://demoeazybill.herokuapp.com/';
+>>>>>>> Stashed changes
 
   bool get isAuth {
     return token != null;

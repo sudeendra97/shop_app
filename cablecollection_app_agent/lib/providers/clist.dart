@@ -8,6 +8,7 @@ import 'package:cablecollection_app/providers/reportlist.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 class CustomerList with ChangeNotifier {
   List<Customer> _list = [];
@@ -19,6 +20,10 @@ class CustomerList with ChangeNotifier {
   var cuid;
   CustomerList([this._authToken]);
   var baseUrl = 'https://samasthadeeparednet.herokuapp.com/';
+<<<<<<< Updated upstream
+=======
+  // var baseUrl = 'https://demoeazybill.herokuapp.com/';
+>>>>>>> Stashed changes
 
   List areaList = [];
   List areaDetails = [];
@@ -161,9 +166,94 @@ class CustomerList with ChangeNotifier {
     return 500;
   }
 
-//Store
   Future<List<Customer>> fetchAndSetCustomer(var token) async {
     final Url = Uri.parse('${baseUrl}agentbill/allcustomer/inUse');
+    var cacheDir = await getTemporaryDirectory();
+    String fileName = "customerList.json";
+
+    try {
+      if (await File(cacheDir.path + "/" + fileName).exists()) {
+        print("Loading from cache");
+        //TOD0: Reading from the json File
+        var jsonData = File(cacheDir.path + "/" + fileName).readAsStringSync();
+
+        if (json.decode(jsonData) == null) {
+          return [];
+        } else {
+          final extratedData = json.decode(jsonData);
+          // print(' This is $extratedData');
+
+          final List<Customer> loadedCustomers = [];
+          for (var data in extratedData) {
+            loadedCustomers.add(
+              Customer(
+                cuId: data['cuId'].toString(),
+                name: data['Name'],
+                mobile: data['Mobile'],
+                smartCardNumber: data['SmartCardNumber'],
+                status: data['Status'],
+                subscriptionEndDate: data['SubscriptionEndDate'] == null
+                    ? 'No End Date'
+                    : data['SubscriptionEndDate'],
+              ),
+            );
+          }
+          _list = loadedCustomers;
+          // notifyListeners();
+          return loadedCustomers;
+        }
+      } else {
+        final responseData = await http.get(
+          Url,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": token,
+          },
+        );
+        print(responseData.statusCode);
+        // print(responseData.body);
+        var tempDir = await getTemporaryDirectory();
+
+        if (json.decode(responseData.body) == null) {
+          return [];
+        } else {
+          print("Loading from API");
+          final extratedData = json.decode(responseData.body);
+          // print(' This is $extratedData');
+          File file = new File(tempDir.path + "/" + fileName);
+          file.writeAsString(responseData.body,
+              flush: true, mode: FileMode.write);
+
+          final List<Customer> loadedCustomers = [];
+          for (var data in extratedData) {
+            loadedCustomers.add(
+              Customer(
+                cuId: data['cuId'].toString(),
+                name: data['Name'],
+                mobile: data['Mobile'],
+                smartCardNumber: data['SmartCardNumber'],
+                status: data['Status'],
+                subscriptionEndDate: data['SubscriptionEndDate'] == null
+                    ? 'No End Date'
+                    : data['SubscriptionEndDate'],
+              ),
+            );
+          }
+          _list = loadedCustomers;
+          // notifyListeners();
+          return loadedCustomers;
+        }
+      }
+    } catch (error) {
+      rethrow;
+    }
+  }
+
+//Store
+  Future<List<Customer>> fetchAndSetCustomerOnRefresh(var token) async {
+    final Url = Uri.parse('${baseUrl}agentbill/allcustomer/inUse');
+    var cacheDir = await getTemporaryDirectory();
+    String fileName = "customerList.json";
 
     try {
       final responseData = await http.get(
@@ -174,13 +264,18 @@ class CustomerList with ChangeNotifier {
         },
       );
       print(responseData.statusCode);
-      print(responseData.body);
+      // print(responseData.body);
+      var tempDir = await getTemporaryDirectory();
 
       if (json.decode(responseData.body) == null) {
         return [];
       } else {
+        print("Loading from API");
         final extratedData = json.decode(responseData.body);
         // print(' This is $extratedData');
+        File file = new File(tempDir.path + "/" + fileName);
+        file.writeAsString(responseData.body,
+            flush: true, mode: FileMode.write);
 
         final List<Customer> loadedCustomers = [];
         for (var data in extratedData) {
@@ -249,7 +344,7 @@ class CustomerList with ChangeNotifier {
         },
       );
       print(Response.statusCode);
-      print(Response.body);
+      // print(Response.body);
       return Response.statusCode;
     } catch (e) {
       rethrow;
@@ -330,7 +425,7 @@ class CustomerList with ChangeNotifier {
         'totalStore': totalStore,
       };
     } catch (e) {
-      print(e);
+      rethrow;
     }
     return {};
   }
@@ -376,7 +471,7 @@ class CustomerList with ChangeNotifier {
       //  print(response.body);
       return response.statusCode;
     } catch (e) {
-      print(e);
+      rethrow;
     }
     return 500;
   }
@@ -395,7 +490,7 @@ class CustomerList with ChangeNotifier {
       var response = json.decode(responseData.body);
 
       print(responseData.statusCode);
-      print(response);
+      // print(response);
       return response;
     } catch (e) {
       rethrow;
@@ -477,7 +572,7 @@ class CustomerList with ChangeNotifier {
       var response = json.decode(responseData.body);
 
       print(responseData.statusCode);
-      print(responseData.body);
+      // print(responseData.body);
       return response;
     } catch (e) {}
     return [];
@@ -613,7 +708,7 @@ class CustomerList with ChangeNotifier {
         },
       );
       print(response.statusCode);
-      print(response.body);
+      // print(response.body);
 
       if (json.decode(response.body) == null) {
         return null;
@@ -705,7 +800,7 @@ class CustomerList with ChangeNotifier {
 
       var response = json.decode(responseData.body);
       print(responseData.statusCode);
-      print(response);
+      // print(response);
       return response;
     } catch (e) {
       rethrow;

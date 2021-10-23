@@ -20,8 +20,8 @@ class ReportList with ChangeNotifier {
   List<Customer> _list = [];
   int colletionTotal = 0;
   static var cusId;
-  // var baseUrl = 'https://samasthadeeparednet.herokuapp.com/';
-  var baseUrl = 'https://demoeazybill.herokuapp.com/';
+  var baseUrl = 'https://samasthadeeparednet.herokuapp.com/';
+  // var baseUrl = 'https://demoeazybill.herokuapp.com/';
 
   List<Report> get reportList {
     return [...?_reportList];

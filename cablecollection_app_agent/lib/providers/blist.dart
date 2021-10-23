@@ -9,6 +9,10 @@ class BillList with ChangeNotifier {
   List<CustomerBill> _allBilllist = [];
   List<CustomerBill> singleBilllist = [];
   var baseUrl = 'https://samasthadeeparednet.herokuapp.com/';
+<<<<<<< Updated upstream
+=======
+  // var baseUrl = 'https://demoeazybill.herokuapp.com/';
+>>>>>>> Stashed changes
 
   static var cusId;
 

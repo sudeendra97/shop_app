@@ -21,6 +21,11 @@ class ReportList with ChangeNotifier {
   int colletionTotal = 0;
   static var cusId;
   var baseUrl = 'https://samasthadeeparednet.herokuapp.com/';
+<<<<<<< Updated upstream
+=======
+  // var baseUrl = 'https://demoeazybill.herokuapp.com/';
+
+>>>>>>> Stashed changes
   static var areaSelected = false;
   static var selectedArea = '';
 

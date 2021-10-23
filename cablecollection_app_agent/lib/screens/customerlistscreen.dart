@@ -55,7 +55,7 @@ class _CustomerListScreenState extends State<CustomerListScreen>
       if (value == true) {
         token = Provider.of<Auth>(context, listen: false).token;
         Provider.of<CustomerList>(context, listen: false)
-            .fetchAndSetCustomer(token)
+            .fetchAndSetCustomerOnRefresh(token)
             .then((value) {
           if (value.isNotEmpty) {
             customerList = value;

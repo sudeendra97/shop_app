@@ -64,7 +64,7 @@ class _CollectionOverViewState extends State<CollectionOverView>
       if (value == true) {
         var token = Provider.of<Auth>(context, listen: false).token;
         Provider.of<CustomerList>(context, listen: false)
-            .customerOverViewScreen(token)
+            .customerOverViewScreenOnRefresh(token)
             .then((value) {
           areaList = value['areaList'] == null ? [] : value['areaList'];
           areaData = value['areaDetails'] == null ? [] : value['areaDetails'];

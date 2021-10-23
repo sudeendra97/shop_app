@@ -1,7 +1,6 @@
 import 'package:cablecollection_app/providers/auth.dart';
 import 'package:cablecollection_app/providers/clist.dart';
 import 'package:cablecollection_app/providers/reportlist.dart';
-import 'package:cablecollection_app/widgets/areabuilder.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
